@@ -1,0 +1,11 @@
+{
+  "vaultPath": "YOUR_VAULT_PATH",
+  "defaultFolder": "MCP Notes",
+  "dateFormat": "YYYY-MM-DD",
+  "autoTag": true,
+  "noteFormat": {
+    "includeTimestamp": true,
+    "includeContext": true,
+    "template": "default"
+  }
+}
