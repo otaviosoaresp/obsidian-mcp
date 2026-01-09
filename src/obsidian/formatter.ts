@@ -1,29 +1,28 @@
 import { format } from 'date-fns';
-import { ConversationNoteParams } from '../types/index.js';
+import { ConversationNoteParams, NoteStyle } from '../types/index.js';
 
 export class NoteFormatter {
   static formatConversationNote(
     params: ConversationNoteParams,
     date: Date = new Date()
   ): string {
-    const { topic, highlights, tags = [], context } = params;
-    
-    const frontMatter = this.generateFrontMatter(topic, tags, date, context);
-    const mainContent = this.generateMainContent(highlights, context);
-    
+    const { topic, highlights, tags = [], style = 'concise' } = params;
+
+    const frontMatter = this.generateFrontMatter(tags, style, date);
+    const mainContent = this.generateMainContent(topic, highlights, style);
+
     return `${frontMatter}\n\n${mainContent}`;
   }
 
   private static generateFrontMatter(
-    topic: string,
     tags: string[],
-    date: Date,
-    context?: string
+    style: NoteStyle,
+    date: Date
   ): string {
-    const frontMatter: Record<string, any> = {
+    const frontMatter: Record<string, string | string[]> = {
       created: format(date, 'yyyy-MM-dd'),
-      context: context || 'AI Conversation',
-      tags: [...tags, 'mcp', 'ai']
+      style,
+      tags: [...tags, 'mcp']
     };
 
     const yamlString = Object.entries(frontMatter)
@@ -38,23 +37,55 @@ export class NoteFormatter {
     return `---\n${yamlString}\n---`;
   }
 
-  private static generateMainContent(highlights: string[], context?: string): string {
-    let content = `# ${highlights[0] || 'Conversation Note'}\n\n`;
+  private static generateMainContent(
+    topic: string,
+    highlights: string[],
+    style: NoteStyle
+  ): string {
+    switch (style) {
+      case 'concise':
+        return this.generateConciseContent(topic, highlights);
+      case 'eli5':
+        return this.generateEli5Content(topic, highlights);
+      case 'detailed':
+      default:
+        return this.generateDetailedContent(topic, highlights);
+    }
+  }
+
+  private static generateConciseContent(topic: string, highlights: string[]): string {
+    let content = `# ${topic}\n\n`;
 
     if (highlights.length > 0) {
-      content += '## Key Points\n\n';
-      highlights.forEach((point, index) => {
-        content += `${index + 1}. ${point}\n`;
+      highlights.forEach((point) => {
+        content += `- ${point}\n`;
       });
-      content += '\n';
     }
 
-    if (context) {
-      content += '## Discussion Context\n\n';
-      content += `${context}\n\n`;
+    return content;
+  }
+
+  private static generateDetailedContent(topic: string, highlights: string[]): string {
+    let content = `# ${topic}\n\n`;
+
+    if (highlights.length > 0) {
+      highlights.forEach((point) => {
+        content += `${point}\n\n`;
+      });
     }
 
-    content += `---\n*Generated via MCP on ${format(new Date(), 'MM/dd/yyyy HH:mm')}*`;
+    return content;
+  }
+
+  private static generateEli5Content(topic: string, highlights: string[]): string {
+    let content = `# ${topic}\n\n`;
+    content += `> Simple explanation\n\n`;
+
+    if (highlights.length > 0) {
+      highlights.forEach((point) => {
+        content += `${point}\n\n`;
+      });
+    }
 
     return content;
   }
